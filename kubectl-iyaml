@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+PROGNAME="kubectl iyaml"
+KUBECTL_IYAML_NS_COLOR=${KUBECTL_IYAML_NS_COLOR:="\033[36m"}
+_KUBECTL_IYAML_VERSION="0.1.0"
+
+show_usage() {
+  cat <<_EOS_ 1>&2
+Usage: $PROGNAME [OPTIONS...] <resource> <query>
+OPTIONS:
+  -h, --help               Show help for '$PROGNAME'
+  -n, --namespace string   The name of namespace to use
+  --context string         The name of kubeconfig context to use
+Examples: 
+  $PROGNAME deployment -n kube-system --context my-cluster
+  $PROGNAME service api -n default
+_EOS_
+}
+
+prompt_help () {
+  printf "See '$PROGNAME --help' for usage.\n"
+}
+
+iyaml() {
+  kind="$1"; kcmd="kubectl get $1"; shift
+  qry="$@"
+
+  if [[ -v OPT_NS ]]; then kcmd+=" -n $OPT_NS"; else kcmd+=" -A"; fi
+  if [[ -v OPT_CTX ]]; then kcmd+=" --context $OPT_CTX"; fi
+  kcmd+=" -o jsonpath=\"{range .items[*]}{'${KUBECTL_IYAML_NS_COLOR}['}{.metadata.namespace}{']\033[0m '}{.metadata.name}{'\n'}{end}\""
+
+  read ns rs < <(eval $kcmd | fzf --ansi --exit-0 --nth 2 --with-nth 1,2 --height 40% --query "$qry"| tr -d '[]')
+  ctx=${OPT_CTX-$(kubectl config current-context)}
+  kubectl get "$kind" "$rs" -n "$ns" --context "$ctx" -o yaml
+}
+
+declare -i argc=0
+declare -a argv=()
+while (( $# > 0 )); do
+  case "$1" in
+    -h | --help)
+      show_usage
+      exit 1
+      ;;
+    --version)
+      echo ${_KUBECTL_IYAML_VERSION}
+      exit 1
+      ;;
+    -n | --namespace* )
+      if [[ "$1" =~ = ]]; then OPT_NS="${1#*=}"; else OPT_NS="$2" && shift; fi
+      ;;
+    --context* )
+      if [[ "$1" =~ = ]]; then OPT_CTX="${1#*=}"; else OPT_CTX="$2" && shift; fi
+      ;;
+    -* | --* )
+      printf "Error: unknown flag: $1\n"
+      prompt_help
+      exit 1
+      ;;
+    * )
+      argc+=1
+      argv+=("$1")
+      ;;
+  esac
+  shift
+done
+
+if [[ ${argc} -lt 1 ]]; then
+  printf "You must specify the type of resource to get. Use \"kubectl api-resources\" for a complete list of supported resources.\n"
+  exit 1
+fi
+
+iyaml "${argv[@]}"
