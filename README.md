@@ -5,6 +5,7 @@ A plugin to view yaml formatted kubernetes resource with an interactive selector
 ## Requirements
 
 - [fzf](https://github.com/junegunn/fzf)
+- [yh](https://github.com/andreazorzetto/yh)
 
 ## Installation
 

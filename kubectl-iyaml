@@ -4,7 +4,7 @@ set -eo pipefail
 
 PROGNAME="kubectl iyaml"
 KUBECTL_IYAML_NS_COLOR=${KUBECTL_IYAML_NS_COLOR:="\033[36m"}
-_KUBECTL_IYAML_VERSION="0.1.0"
+_KUBECTL_IYAML_VERSION="0.0.1"
 
 show_usage() {
   cat <<_EOS_ 1>&2
@@ -33,7 +33,7 @@ iyaml() {
 
   read ns rs < <(eval $kcmd | fzf --ansi --exit-0 --nth 2 --with-nth 1,2 --height 40% --query "$qry"| tr -d '[]')
   ctx=${OPT_CTX-$(kubectl config current-context)}
-  kubectl get "$kind" "$rs" -n "$ns" --context "$ctx" -o yaml
+  kubectl get "$kind" "$rs" -n "$ns" --context "$ctx" -o yaml | yh | less
 }
 
 declare -i argc=0
