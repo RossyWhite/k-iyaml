@@ -10,8 +10,9 @@ A plugin to view yaml formatted kubernetes resource with an interactive selector
 ## Installation
 
 ```bash
-export INSTALL=<yourpath> # anywhere inside $PATH
-curl https://raw.githubusercontent.com/RossyWhite/k-iyaml/master/kubectl-iyaml -o $INSTALL/kubectl-iyaml
+curl -LO https://raw.githubusercontent.com/RossyWhite/k-iyaml/v0.0.1/kubectl-iyaml
+chmod u+x kubectl-iyaml
+mv kubectl-iyaml /usr/local/bin
 ```
 
 ## Usage
