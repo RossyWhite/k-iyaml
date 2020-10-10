@@ -3,8 +3,7 @@
 set -eo pipefail
 
 PROGNAME="kubectl iyaml"
-KUBECTL_IYAML_NS_COLOR=${KUBECTL_IYAML_NS_COLOR:="\033[36m"}
-_KUBECTL_IYAML_VERSION="0.0.1"
+_KUBECTL_IYAML_VERSION="0.0.2"
 
 show_usage() {
   cat <<_EOS_ 1>&2
@@ -29,9 +28,9 @@ iyaml() {
 
   if [[ -v OPT_NS ]]; then kcmd+=" -n $OPT_NS"; else kcmd+=" -A"; fi
   if [[ -v OPT_CTX ]]; then kcmd+=" --context $OPT_CTX"; fi
-  kcmd+=" -o jsonpath=\"{range .items[*]}{'${KUBECTL_IYAML_NS_COLOR}['}{.metadata.namespace}{']\033[0m '}{.metadata.name}{'\n'}{end}\""
 
-  read ns rs < <(eval $kcmd | fzf --ansi --exit-0 --nth 2 --with-nth 1,2 --height 40% --query "$qry"| tr -d '[]')
+  kcmd+=" -o custom-columns=Namespace:.metadata.namespace,NAME:.metadata.name"
+  read ns rs < <(eval $kcmd | fzf --header-lines=1 --ansi --exit-0 --query "$qry" --prompt "$kind: ")
   ctx=${OPT_CTX-$(kubectl config current-context)}
   kubectl get "$kind" "$rs" -n "$ns" --context "$ctx" -o yaml | yh | less
 }
@@ -68,8 +67,12 @@ while (( $# > 0 )); do
 done
 
 if [[ ${argc} -lt 1 ]]; then
-  printf "You must specify the type of resource to get. Use \"kubectl api-resources\" for a complete list of supported resources.\n"
-  exit 1
+  rtype=$(kubectl api-resources --verbs=list,get -o name | fzf --prompt "Select Resource Type: ")
+
+  if [[ -z "$rtype" ]]; then
+    exit 1
+  fi
+  argv+=("$rtype")
 fi
 
 iyaml "${argv[@]}"
