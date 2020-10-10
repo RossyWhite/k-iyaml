@@ -10,7 +10,7 @@ A plugin to view yaml formatted kubernetes resource with an interactive selector
 ## Installation
 
 ```bash
-curl -LO https://raw.githubusercontent.com/RossyWhite/k-iyaml/v0.0.1/kubectl-iyaml
+curl -LO https://raw.githubusercontent.com/RossyWhite/k-iyaml/v0.0.2/kubectl-iyaml
 chmod u+x kubectl-iyaml
 mv kubectl-iyaml /usr/local/bin
 ```
